@@ -3,10 +3,17 @@ import openai
 import os
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+from dotenv import load_dotenv
 
-# Fetch the API key from Streamlit secrets
+# Load environment variables from .env file
+load_dotenv()
+
+# Set up the OpenAI client with Streamlit secrets
 api_key = st.secrets["general"]["OPENAI_API_KEY"]
 openai.api_key = api_key
+
+# Enter your Assistant ID here from environment variables
+ASSISTANT_ID = st.secrets["general"].get("ASSISTANT_ID")
 
 # Create a ThreadPoolExecutor for async tasks
 executor = ThreadPoolExecutor(max_workers=1)
@@ -16,13 +23,17 @@ REQUEST_LIMIT = 10
 
 async def get_response(user_input, stop_event):
     try:
-        # Create a completion request
-        response = openai.Completion.create(
-            engine="text-davinci-003",
-            prompt=user_input,
-            max_tokens=150
+        # Create a chat completion request
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # You can change the model to the one you're using
+            messages=[
+                {"role": "user", "content": user_input}
+            ]
         )
-        return response.choices[0].text.strip()
+
+        # Extract the assistant's reply
+        message = response.choices[0].message['content']
+        return message
     except Exception as e:
         return f"Error: {str(e)}"
 
