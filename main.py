@@ -1,19 +1,12 @@
 import streamlit as st
-from openai import OpenAI
+import openai
 import os
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
-
-# Enter your Assistant ID here from environment variables
-ASSISTANT_ID = os.getenv("ASSISTANT_ID")
-
-# Make sure your API key is set as an environment variable
-api_key = os.getenv('OPENAI_API_KEY')
-client = OpenAI(api_key=api_key)
+# Fetch the API key from Streamlit secrets
+api_key = st.secrets["general"]["OPENAI_API_KEY"]
+openai.api_key = api_key
 
 # Create a ThreadPoolExecutor for async tasks
 executor = ThreadPoolExecutor(max_workers=1)
@@ -23,30 +16,13 @@ REQUEST_LIMIT = 10
 
 async def get_response(user_input, stop_event):
     try:
-        # Create a thread with the user's query
-        thread = client.beta.threads.create(
-            messages=[{"role": "user", "content": user_input}]
+        # Create a completion request
+        response = openai.Completion.create(
+            engine="text-davinci-003",
+            prompt=user_input,
+            max_tokens=150
         )
-
-        # Submit the thread to the assistant (as a new run)
-        run = client.beta.threads.runs.create(thread_id=thread.id, assistant_id=ASSISTANT_ID)
-
-        # Wait for the run to complete or stop event
-        while run.status != "completed":
-            if stop_event.is_set():
-                return "Generation stopped."
-            run = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
-            await asyncio.sleep(0.5)  # Shorter sleep for more responsiveness
-
-        # Get the latest message from the thread
-        message_response = client.beta.threads.messages.list(thread_id=thread.id)
-        messages = message_response.data
-
-        if messages:
-            latest_message = messages[0].content[0].text.value
-            return latest_message
-        else:
-            return "No response from assistant."
+        return response.choices[0].text.strip()
     except Exception as e:
         return f"Error: {str(e)}"
 
