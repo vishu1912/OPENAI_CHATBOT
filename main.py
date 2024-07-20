@@ -12,9 +12,6 @@ load_dotenv()
 api_key = st.secrets["general"]["OPENAI_API_KEY"]
 openai.api_key = api_key
 
-# Enter your Assistant ID here from environment variables
-ASSISTANT_ID = st.secrets["general"].get("ASSISTANT_ID")
-
 # Create a ThreadPoolExecutor for async tasks
 executor = ThreadPoolExecutor(max_workers=1)
 
@@ -25,7 +22,7 @@ async def get_response(user_input, stop_event):
     try:
         # Create a chat completion request
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # You can change the model to the one you're using
+            model="gpt-3.5-turbo",  # Specify the model you are using
             messages=[
                 {"role": "user", "content": user_input}
             ]
