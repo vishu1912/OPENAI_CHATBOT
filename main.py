@@ -8,7 +8,10 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-# Set up the OpenAI client with Streamlit secrets
+# Enter your Assistant ID here from environment variables
+ASSISTANT_ID = os.getenv("ASSISTANT_ID")
+
+# Make sure your API key is set as an environment variable
 api_key = st.secrets["general"]["OPENAI_API_KEY"]
 openai.api_key = api_key
 
@@ -20,15 +23,13 @@ REQUEST_LIMIT = 10
 
 async def get_response(user_input, stop_event):
     try:
-        # Create a chat completion request
+        # Use the OpenAI Chat API
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # Specify the model you are using
-            messages=[
-                {"role": "user", "content": user_input}
-            ]
+            model="gpt-3.5-turbo",  # Choose the model you want to use
+            messages=[{"role": "user", "content": user_input}]
         )
 
-        # Extract the assistant's reply
+        # Get the assistant's reply
         message = response.choices[0].message['content']
         return message
     except Exception as e:
@@ -153,3 +154,4 @@ st.markdown("""
     }
     </style>
     """, unsafe_allow_html=True)
+
