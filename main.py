@@ -1,17 +1,9 @@
 import streamlit as st
 import openai
-import os
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
-
-# Enter your Assistant ID here from environment variables
-ASSISTANT_ID = os.getenv("ASSISTANT_ID")
-
-# Make sure your API key is set as an environment variable
+# Get API key from Streamlit secrets
 api_key = st.secrets["general"]["OPENAI_API_KEY"]
 openai.api_key = api_key
 
@@ -23,39 +15,39 @@ REQUEST_LIMIT = 10
 
 async def get_response(user_input, stop_event):
     try:
-        # Use the OpenAI Chat API
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # Choose the model you want to use
+            model="gpt-3.5-turbo",  # Specify the model you want to use
             messages=[{"role": "user", "content": user_input}]
         )
-
-        # Get the assistant's reply
+        # Extract the response content
         message = response.choices[0].message['content']
         return message
     except Exception as e:
         return f"Error: {str(e)}"
+
+# Streamlit app code
+st.title("Chat with Chatty")
+
+if 'messages' not in st.session_state:
+    st.session_state.messages = []
+if 'stop_event' not in st.session_state:
+    st.session_state.stop_event = asyncio.Event()
+if 'future' not in st.session_state:
+    st.session_state.future = None
+if 'error_message' not in st.session_state:
+    st.session_state.error_message = ""
+if 'input_text' not in st.session_state:
+    st.session_state.input_text = ""
+if 'generating' not in st.session_state:
+    st.session_state.generating = False
+if 'request_count' not in st.session_state:
+    st.session_state.request_count = 0  # Initialize request count
 
 # Sidebar chatbot
 with st.sidebar:
     st.image("photo.jpg", width=100)  # Replace with the correct path to your photo
     st.header("Chatty")
     st.write("Your virtual assistant")
-    
-    # Initialize session state if not already
-    if 'messages' not in st.session_state:
-        st.session_state.messages = []
-    if 'stop_event' not in st.session_state:
-        st.session_state.stop_event = asyncio.Event()
-    if 'future' not in st.session_state:
-        st.session_state.future = None
-    if 'error_message' not in st.session_state:
-        st.session_state.error_message = ""
-    if 'input_text' not in st.session_state:
-        st.session_state.input_text = ""
-    if 'generating' not in st.session_state:
-        st.session_state.generating = False
-    if 'request_count' not in st.session_state:
-        st.session_state.request_count = 0  # Initialize request count
 
     # Display chat history
     st.write("**Chat History:**")
@@ -123,7 +115,7 @@ st.markdown("""
     .css-1emrehy {
         position: fixed;
         bottom: 10px;
-        right: 10px;  /* Changed from left to right */
+        left: 10px;
         z-index: 1000;
         width: 100%;
         display: flex;
@@ -154,4 +146,5 @@ st.markdown("""
     }
     </style>
     """, unsafe_allow_html=True)
+
 
